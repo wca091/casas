@@ -1,7 +1,7 @@
 // ====== CONFIGURAÇÃO — troque estes dois valores ======
 const WORKER_URL = "contas.williamamorim126.workers.dev
 ";
-const EXTENSION_ID = "SUA_EXTENSION_ID_AQUI"; // pegue em chrome://extensions depois de instalar
+const EXTENSION_ID = "chlhhdkbddddoldnldfkiffadpbgfnje"; // pegue em chrome://extensions depois de instalar
 // =========================================================
 
 async function fetchJSON(path) {
