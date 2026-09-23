@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel Multilogin</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <h1>Painel <span class="accent">Multilogin</span></h1>
+    <p class="subtitle">Contas por plataforma</p>
+
+    <div id="grid" class="grid">
+      <p class="state-msg">Carregando plataformas…</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    async function carregarPlataformas() {
+      const grid = document.getElementById("grid");
+      try {
+        const plataformas = await fetchJSON("/api/plataformas");
+
+        // Busca a contagem de contas de cada plataforma em paralelo
+        const comContagem = await Promise.all(
+          plataformas.map(async (p) => {
+            try {
+              const contas = await fetchJSON(`/api/contas?aba=${encodeURIComponent(p.aba)}`);
+              return { ...p, total: contas.length };
+            } catch {
+              return { ...p, total: 0 };
+            }
+          })
+        );
+
+        grid.innerHTML = comContagem
+          .map(
+            (p) => `
+          <a class="tile" href="plataforma.html?aba=${encodeURIComponent(p.aba)}">
+            <div class="tile-icon" style="background:${p.cor || "#2dd4a7"}"></div>
+            <div class="tile-name">${p.nome}</div>
+            <div class="tile-count">${p.total} conta${p.total === 1 ? "" : "s"}</div>
+          </a>`
+          )
+          .join("");
+      } catch (err) {
+        grid.innerHTML = `<p class="error-msg">Não foi possível carregar as plataformas: ${err.message}</p>`;
+      }
+    }
+    carregarPlataformas();
+  </script>
+</body>
+</html>
