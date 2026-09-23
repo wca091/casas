@@ -1,5 +1,6 @@
 // ====== CONFIGURAÇÃO — troque estes dois valores ======
-const WORKER_URL = "https://SEU-WORKER.SEU-USUARIO.workers.dev";
+const WORKER_URL = "contas.williamamorim126.workers.dev
+";
 const EXTENSION_ID = "SUA_EXTENSION_ID_AQUI"; // pegue em chrome://extensions depois de instalar
 // =========================================================
 
