@@ -10,7 +10,7 @@
   },
   "externally_connectable": {
     "matches": [
-      "https://SEU-USUARIO.github.io/*",
+      "https://wca091.github.io/casas/*",
       "http://localhost/*",
       "http://127.0.0.1/*"
     ]
