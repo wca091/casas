@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Multilogin</title>
+<style>
+  :root { --bg:#0f141b; --card:#161c26; --line:#252d3a; --txt:#e8edf3; --mut:#8b96a5; --acc:#4fd1b8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.4 system-ui,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px; }
+  h1 { margin:0; font-size:22px; } h1 span { color:var(--acc); }
+  .sub { color:var(--mut); margin:4px 0 20px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 12px; text-align:center; cursor:pointer; }
+  .card:hover { border-color:var(--acc); }
+  .dot { width:22px; height:22px; border-radius:4px; margin:0 auto 12px; border:2px solid #000; }
+  .mut { color:var(--mut); font-size:13px; }
+  .row { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+  .row b { display:block; margin-bottom:8px; }
+  .field { display:flex; align-items:center; gap:10px; margin-top:6px; }
+  .field code { flex:1; color:var(--mut); overflow:hidden; text-overflow:ellipsis; }
+  button, .btn { background:var(--acc); color:#06231d; border:0; border-radius:8px; padding:7px 14px; font-weight:600; cursor:pointer; text-decoration:none; font-size:14px; }
+  button.ghost { background:transparent; color:var(--txt); border:1px solid var(--line); }
+  .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  input { background:var(--card); border:1px solid var(--line); color:var(--txt); border-radius:8px; padding:9px 12px; font-size:15px; }
+  .err { color:#ff7b7b; margin-top:10px; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+// ====== CONFIGURE AQUI ======
+const API_URL = "https://script.google.com/macros/s/AKfycbwXiD3khiYC2SJeS9x7NvgyjE7OQu1pGdMdp3C25SZZPznIgkcpfXPMnvrGXI__QaUN/exec";
+const CORES = ["#0a7be0", "#1fc21f", "#ffee00", "#ff6a10", "#9b7fe6", "#e81123"];
+// =============================
+
+const app = document.getElementById("app");
+let dados = [];
+
+function el(tag, props = {}, ...filhos) {
+  const e = document.createElement(tag);
+  Object.assign(e, props);
+  filhos.flat().forEach(f => e.append(f));
+  return e;
+}
+
+function copiar(texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const antes = btn.textContent;
+    btn.textContent = "Copiado!";
+    setTimeout(() => (btn.textContent = antes), 1200);
+  });
+}
+
+function telaChave(erro) {
+  const inp = el("input", { type: "password", placeholder: "Chave de acesso" });
+  const ok = el("button", { textContent: "Entrar", onclick: () => { sessionStorage.chave = inp.value; carregar(); } });
+  inp.onkeydown = e => e.key === "Enter" && ok.click();
+  app.replaceChildren(
+    el("h1", {}, "Painel ", el("span", { textContent: "Multilogin" })),
+    el("p", { className: "sub", textContent: "Digite a chave de acesso." }),
+    el("div", { className: "field" }, inp, ok),
+    el("div", { className: "err", textContent: erro || "" })
+  );
+}
+
+async function carregar() {
+  if (!sessionStorage.chave) return telaChave();
+  try {
+    const r = await fetch(API_URL + "?key=" + encodeURIComponent(sessionStorage.chave));
+    const j = await r.json();
+    if (!j.ok) { sessionStorage.removeItem("chave"); return telaChave("Chave inválida."); }
+    dados = j.rows;
+    telaCategorias();
+  } catch (e) {
+    telaChave("Erro ao carregar os dados.");
+  }
+}
+
+function telaCategorias() {
+  const nomes = [...new Set(dados.map(d => d.plataforma))];
+  const cards = nomes.map((n, i) => {
+    const qtd = dados.filter(d => d.plataforma === n).length;
+    return el("div", { className: "card", onclick: () => telaContas(n, i) },
+      el("div", { className: "dot", style: "background:" + CORES[i % CORES.length] }),
+      el("b", { textContent: n }),
+      el("div", { className: "mut", textContent: qtd + (qtd === 1 ? " conta" : " contas") })
+    );
+  });
+  app.replaceChildren(
+    el("h1", {}, "Painel ", el("span", { textContent: "Multilogin" })),
+    el("p", { className: "sub", textContent: "Contas por plataforma" }),
+    el("div", { className: "grid" }, cards),
+    el("p", { className: "mut" }, el("button", { className: "ghost", textContent: "Atualizar", onclick: carregar }))
+  );
+}
+
+function campo(rotulo, valor, mascarar) {
+  const b = el("button", { textContent: "Copiar" });
+  b.onclick = () => copiar(valor, b);
+  return el("div", { className: "field" },
+    el("span", { className: "mut", textContent: rotulo }),
+    el("code", { textContent: mascarar ? "••••••••" : valor }), b);
+}
+
+function telaContas(plataforma, i) {
+  const contas = dados.filter(d => d.plataforma === plataforma);
+  const link = (contas.find(c => c.link) || {}).link;
+  app.replaceChildren(
+    el("div", { className: "top" },
+      el("button", { className: "ghost", textContent: "← Voltar", onclick: telaCategorias }),
+      link ? el("a", { className: "btn", href: link, target: "_blank", rel: "noopener", textContent: "Abrir site" }) : ""
+    ),
+    el("h1", { textContent: plataforma }),
+    el("p", { className: "sub" }),
+    contas.map(c => el("div", { className: "row" },
+      el("b", { textContent: c.nome }),
+      campo("ID", c.id, false),
+      campo("Senha", c.senha, true)
+    ))
+  );
+}
+
+carregar();
+</script>
+</body>
+</html>
