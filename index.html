@@ -55,7 +55,7 @@ function copiar(texto, btn) {
 }
 
 function telaChave(erro) {
-  const inp = el("input", { type: "password", placeholder: "Chave de acesso" });
+  const inp = el("input", { type: "password", placeholder: "Chave de acesso", autocomplete: "off", style: "flex:1;min-width:0" });
   const ok = el("button", { textContent: "Entrar", onclick: () => { sessionStorage.chave = inp.value; carregar(); } });
   inp.onkeydown = e => e.key === "Enter" && ok.click();
   app.replaceChildren(
@@ -64,6 +64,7 @@ function telaChave(erro) {
     el("div", { className: "field" }, inp, ok),
     el("div", { className: "err", textContent: erro || "" })
   );
+  setTimeout(() => inp.focus(), 0);
 }
 
 async function carregar() {
@@ -75,7 +76,7 @@ async function carregar() {
     dados = j.rows;
     telaCategorias();
   } catch (e) {
-    telaChave("Erro ao carregar os dados.");
+    telaChave("Erro ao carregar os dados. Confira se a API_URL foi colada no index.html.");
   }
 }
 
